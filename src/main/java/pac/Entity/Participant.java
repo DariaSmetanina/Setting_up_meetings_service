@@ -1,3 +1,5 @@
+package pac.Entity;
+
 public class Participant {
     String name;
     String email;

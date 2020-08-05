@@ -1,5 +1,8 @@
+package pac.DB;
+import pac.Entity.*;
 
 import java.sql.*;
+import java.util.Collections;
 import java.util.Date;
 
 import java.util.ArrayList;
@@ -27,7 +30,7 @@ public class DB {
         }
     }
 
-    public void addMeeting(String email, Date datetime, String place){
+    public void addMeeting(String email, java.sql.Date datetime, String place){
         int id=getIdByEmail(email);
     if(id==-1){
         System.out.print("no email");
@@ -120,11 +123,10 @@ public class DB {
 
     }
 
-    public ArrayList<Meeting> myMeetings(String email){
+    private ArrayList<Meeting> myMeetingSQL(int id){
         ArrayList<Meeting> meetings=new ArrayList<Meeting>();
-
         String query = "SELECT * from meeting " +
-                "WHERE idorganizer="+getIdByEmail(email)+";";
+                "WHERE idorganizer="+id+";";
 
         try {
 
@@ -138,8 +140,23 @@ public class DB {
                 String pl=rs.getString(3);
                 String idn="YOU";
                 meetings.add(new Meeting(i,dt,pl,idn));
-                }
+            }
+                rs.close();}
 
+        catch (Exception e) {
+                System.out.print("error place");
+                System.out.print(e.toString());
+            }
+
+        return meetings;
+    }
+
+    public ArrayList<Meeting> myMeetings(String email){
+        ArrayList<Meeting> meetings=myMeetingSQL(getIdByEmail(email));
+
+        String query = "";
+
+        try {
             for (Meeting m : meetings){
                 query = "SELECT participant.name, participant.email, participantsandmeeting.idmeeting " +
                         "FROM participant " +
@@ -150,7 +167,7 @@ public class DB {
                 rs = stmt.executeQuery(query);
 
                 while (rs.next()) {
-                    m.participants.add(new Participant(rs.getString(1),rs.getString(2)));
+                    m.addParticipant(new Participant(rs.getString(1),rs.getString(2)));
                 }
                 rs.close();
             }
@@ -166,20 +183,34 @@ public class DB {
     }
 
     public ArrayList<Meeting> timetable(String email){
-        ArrayList<Meeting> meetings=new ArrayList<Meeting>();
-
         int myid=getIdByEmail(email);
+        ArrayList<Meeting> meetings=myMeetingSQL(myid);
+
+//        String quer = "SELECT " +
+//                "par.idparticipant, par.name, " +
+//                "met.idmeeting, met.datetime, met.place, met.idorganizer, " +
+//                "pnm.idmeeting, pnm.idparticipant " +
+//                "FROM participant par " +
+//                "JOIN meeting met " +
+//                "ON par.idparticipant=met.idorganizer " +
+//                "RIGHT OUTER JOIN participantsandmeeting pnm " +
+//                "ON met.idmeeting=pnm.idmeeting "+
+//                "WHERE pnm.idparticipant="+myid+" OR met.idorganizer="+myid+" " +
+//                "ORDER by met.datetime;";
+
         String query = "SELECT " +
                 "par.idparticipant, par.name, " +
                 "met.idmeeting, met.datetime, met.place, met.idorganizer, " +
                 "pnm.idmeeting, pnm.idparticipant " +
-                "FROM participant par " +
-                "JOIN meeting met " +
-                "ON par.idparticipant=met.idorganizer " +
-                "JOIN participantsandmeeting pnm " +
-                "ON met.idmeeting=pnm.idmeeting "+
-                "WHERE pnm.idparticipant="+myid+" OR met.idorganizer="+myid+" " +
+                "FROM participantsandmeeting pnm " +
+                "LEFT OUTER JOIN meeting met " +
+                "ON pnm.idmeeting=met.idmeeting " +
+                "LEFT OUTER JOIN participant par " +
+                "ON met.idorganizer=par.idparticipant "+
+                "WHERE pnm.idparticipant="+myid+" "+
                 "ORDER by met.datetime;";
+
+
 
         try {
             rs = stmt.executeQuery(query);
@@ -190,10 +221,7 @@ public class DB {
                 Timestamp timestamp = rs.getTimestamp(4);
                 Date dt = new Date(timestamp.getTime());
                 String pl = rs.getString(5);
-                String idn = "YOU";
-                if(rs.getInt(6)!=myid){
-                    idn=rs.getString(2);
-                }
+                String idn=rs.getString(2);
                 meetings.add(new Meeting(i, dt, pl, idn));
             }
         }
@@ -201,7 +229,7 @@ public class DB {
                 System.out.print("error place");
                 System.out.print(e.toString());
             }
-
+        Collections.sort(meetings);
             return meetings;
     }
 

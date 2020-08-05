@@ -25,7 +25,7 @@ public class ParticipantController {
 
     @PostMapping
     public Map<String, String>  addParticipant(@RequestBody Map<String, String> message) throws ParseException {
-        BL.addParticipant(message);
+        message.put("Message",BL.addParticipant(message));
         return message;
     }
     @DeleteMapping

@@ -51,12 +51,14 @@ public class BL {
         db.exit();
     }
 
-    public static void addParticipant(Map<String, String> message){
+    public static String addParticipant(Map<String, String> message){
         DB db=new DB();
-
+        String res=db.participantIsFree(Integer.parseInt(message.get("id")), message.get("email"));
         db.addParticipant(Integer.parseInt(message.get("id")), message.get("email"));
 
         db.exit();
+
+        return res;
     }
 
     public static void delMeeting(Map<String, String> message){

@@ -1,4 +1,5 @@
 package pac.DB;
+import javafx.util.Pair;
 import pac.Entity.*;
 
 import java.sql.*;
@@ -64,6 +65,54 @@ public class DB {
             System.out.print(e+"\n");
         }
         return id;
+    }
+
+    private Timestamp getMeetingDate(int id){
+        ArrayList<Meeting> meetings=new ArrayList<Meeting>();
+        String query = "SELECT datetime from meeting " +
+                "WHERE idmeeting="+id+";";
+        Timestamp timestamp=new Timestamp(System.currentTimeMillis());
+        try {
+
+            rs = stmt.executeQuery(query);
+
+            if (rs.next()) {
+                timestamp = rs.getTimestamp(1);
+                }
+            rs.close();}
+
+        catch (Exception e) {
+            System.out.print("error place");
+            System.out.print(e.toString());
+        }
+
+        return timestamp;
+    }
+
+    public String participantIsFree(int idmeeting, String email){
+        String res="";
+        Timestamp dt=getMeetingDate(idmeeting);
+        Timestamp before=new Timestamp(dt.getTime()-(1000 * 60 * 60 ));
+        Timestamp after=new Timestamp(dt.getTime()+(1000 * 60 * 60 ));
+        ArrayList<Meeting> meetings=new ArrayList<Meeting>();
+        String query = "SELECT met.datetime, met.idmeeting, pnm.idparticipant, pnm.idmeeting " +
+                "from meeting met " +
+                "RIGHT OUTER JOIN participantsandmeeting pnm " +
+                "ON pnm.idmeeting=met.idmeeting " +
+                "WHERE pnm.idparticipant="+getIdByEmail(email)+" AND met.datetime BETWEEN '"+before+"' AND '"+after+"';";
+        try {
+            rs = stmt.executeQuery(query);
+            if (rs.next()) {
+                res="May not be able to come";
+            }
+            rs.close();}
+
+        catch (Exception e) {
+            System.out.print("error place");
+            System.out.print(e.toString());
+        }
+
+        return res;
     }
 
     public void addParticipant(int idmeeting, String email){
@@ -188,18 +237,6 @@ public class DB {
     public ArrayList<Meeting> timetable(String email){
         int myid=getIdByEmail(email);
         ArrayList<Meeting> meetings=myMeetingSQL(myid);
-
-//        String quer = "SELECT " +
-//                "par.idparticipant, par.name, " +
-//                "met.idmeeting, met.datetime, met.place, met.idorganizer, " +
-//                "pnm.idmeeting, pnm.idparticipant " +
-//                "FROM participant par " +
-//                "JOIN meeting met " +
-//                "ON par.idparticipant=met.idorganizer " +
-//                "RIGHT OUTER JOIN participantsandmeeting pnm " +
-//                "ON met.idmeeting=pnm.idmeeting "+
-//                "WHERE pnm.idparticipant="+myid+" OR met.idorganizer="+myid+" " +
-//                "ORDER by met.datetime;";
 
         String query = "SELECT " +
                 "par.idparticipant, par.name, " +

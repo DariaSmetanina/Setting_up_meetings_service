@@ -7,6 +7,9 @@ import java.util.Date;
 
 import java.util.ArrayList;
 
+import static java.lang.Boolean.FALSE;
+import static java.lang.Boolean.TRUE;
+
 public class DB {
     private static final String url = "jdbc:mysql://127.0.0.1:3306/Avito?serverTimezone=Europe/Moscow&useSSL=false";
     private static final String user = "root";
@@ -231,6 +234,37 @@ public class DB {
             }
         Collections.sort(meetings);
             return meetings;
+    }
+
+    public Boolean findMeeting(String email, java.sql.Date dt, String place){
+        String query ="SELECT * FROM Meeting WHERE (`idorganizer` = '"+getIdByEmail(email)+"' AND `datetime` = '"+dt.toString()+"' AND `place` = '"+place+"');";
+        Boolean res=FALSE;
+        try {
+            rs = stmt.executeQuery(query);
+            if(rs.next()) {
+                res=TRUE;
+            }
+                rs.close();
+        }
+        catch (Exception e){
+            System.out.print(e+"\n");
+        }
+        return res;
+    }
+    public Boolean findParticipant(int idMeeting, String email){
+        String query ="SELECT * FROM participantsandmeeting WHERE (`idparticipant` = '"+getIdByEmail(email)+"' AND `idmeeting` = '"+idMeeting+"');";
+        Boolean res=FALSE;
+        try {
+            rs = stmt.executeQuery(query);
+            if(rs.next()) {
+                res=TRUE;
+            }
+            rs.close();
+        }
+        catch (Exception e){
+            System.out.print(e+"\n");
+        }
+        return res;
     }
 
     public void exit(){
